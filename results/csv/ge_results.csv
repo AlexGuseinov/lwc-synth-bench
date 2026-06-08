@@ -1,0 +1,5 @@
+cipher,top,area_um2,GE
+PRESENT-80,present_core_80,1664.36,2085.7
+PRESENT-128,present_core_128,2047.14,2565.3
+GIFT-64-128,gift64_core,1714.9,2149.0
+GIFT-128-128,gift128_core,2417.14,3029.0

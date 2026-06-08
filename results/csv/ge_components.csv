@@ -1,0 +1,9 @@
+component,module,area_um2,GE
+GIFT-64-128 round,gift64_round,269.72,338.0
+GIFT-64-128 keysch,gift_key_schedule,0.0,0.0
+GIFT-128-128 round,gift128_round,533.6,668.7
+GIFT-128-128 keysch,gift_key_schedule,0.0,0.0
+PRESENT-80 round,present_round,421.34,528.0
+PRESENT-80 keysch,present_key_schedule_80,27.66,34.7
+PRESENT-128 round,present_round,421.34,528.0
+PRESENT-128 keysch,present_key_schedule_128,47.35,59.3
