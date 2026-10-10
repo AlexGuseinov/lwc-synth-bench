@@ -16,6 +16,14 @@ This repository provides a fully reproducible synthesis benchmarking framework f
 | PRESENT-128 | 64 | 128 | SPN |
 | SIMON | 64 | 128 | Feistel |
 | SPECK | 64 | 128 | ARX |
+| Dipper-64/96 | 64 | 96 | SPN-ARX |
+| Dipper-64/128 | 64 | 128 | SPN-ARX |
+
+The Dipper cores (`dipper_rtl/`) are the round-based RTL of
+[Dipper-lightweight-cipher](https://github.com/AlexGuseinov/Dipper-lightweight-cipher)
+@ `26d0f05` (Huseynli, Imamverdiyev, Alizadeh, *Cryptography* 10(4), 52, 2026).
+They go through the same flow as the other ciphers but are left out of the
+inter-library calibration, so `calibration_results.csv` covers the six ciphers above them.
 
 ---
 
@@ -43,6 +51,7 @@ lwc-synth-bench/
 │   ├── present/
 │   ├── simon/
 │   └── speck/
+├── dipper_rtl/            # Dipper-64/96 and Dipper-64/128 RTL
 ├── libs/                  # Standard cell libraries
 ├── scripts/               # Synthesis automation scripts
 │   ├── run_synth.py

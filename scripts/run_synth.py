@@ -24,6 +24,15 @@ CIPHERS = [
     {"name": "GIFT-128-128", "rtl_dir": "gift_rtl",    "top": "gift128_core",     "class": "SPN"},
     {"name": "SPECK-64-128", "rtl_dir": "speck_rtl",   "top": "speck_core_128",   "class": "ARX"},
     {"name": "SIMON-64-128", "rtl_dir": "simon_rtl",   "top": "simon_core_128",   "class": "Feistel"},
+    # Dipper (Cryptography 10(4), 52, 2026): iki variant eyni qovluqdakı faylları paylaşır,
+    # ona görə fayl siyahısı açıq verilir. Calibration-a daxil edilmir ki, dərc olunmuş
+    # calibration_results.csv (6 baseline şifr) dəyişməsin.
+    {"name": "Dipper-64/96",  "rtl_dir": "dipper_rtl", "top": "dipper_core_96",  "class": "SPN-ARX",
+     "files": ["dipper_sbox.v", "dipper_perm.v", "dipper_round.v",
+               "dipper_key_schedule_96.v", "dipper_core_96.v"], "calibrate": False},
+    {"name": "Dipper-64/128", "rtl_dir": "dipper_rtl", "top": "dipper_core_128", "class": "SPN-ARX",
+     "files": ["dipper_sbox.v", "dipper_perm.v", "dipper_round.v",
+               "dipper_key_schedule_128.v", "dipper_core_128.v"], "calibrate": False},
 ]
 
 LIBRARIES = [
@@ -49,6 +58,8 @@ PUBLISHED_GE = {
     "GIFT-128-128": 1997.0,
     "SIMON-64-128": 1458.0,   # mənbəni təsdiqlə
     "SPECK-64-128": None,
+    "Dipper-64/96":  2498.0,  # Dipper məqaləsi, Yosys 0.33 + Nangate45
+    "Dipper-64/128": 2824.0,
 }
 
 YOSYS = os.environ.get("YOSYS", "yosys")
@@ -230,8 +241,11 @@ def main():
                 if not os.path.isdir(cip["rtl_dir"]):
                     print(f"[ATLA] {cip['name']}: '{cip['rtl_dir']}' yoxdur")
                     continue
-                rtl = sorted(os.path.join(cip["rtl_dir"], f)
-                             for f in os.listdir(cip["rtl_dir"]) if f.endswith(".v"))
+                if "files" in cip:
+                    rtl = [os.path.join(cip["rtl_dir"], f) for f in cip["files"]]
+                else:
+                    rtl = sorted(os.path.join(cip["rtl_dir"], f)
+                                 for f in os.listdir(cip["rtl_dir"]) if f.endswith(".v"))
                 area, log, rc = run_yosys(rtl, cip["top"], lib_path)
                 if area is None:
                     print(f"[XƏTA] {cip['name']} x {lib['name']} (rc={rc}).\n{log[-600:]}")
@@ -265,7 +279,8 @@ def main():
         w.writerows(rows)
     print(f"\nYazıldı -> {OUT_CSV}  ({len(rows)} sətr)")
 
-    cal = calibrate(rows)
+    cal_names = {c["name"] for c in CIPHERS if c.get("calibrate", True)}
+    cal = calibrate([r for r in rows if r["cipher"] in cal_names])
     if cal:
         with open(CAL_CSV, "w", newline="") as f:
             w = csv.DictWriter(f, fieldnames=list(cal[0].keys()))
