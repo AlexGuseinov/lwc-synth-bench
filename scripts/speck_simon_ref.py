@@ -38,7 +38,7 @@ def simon_ks(kw, zsel):
         tmp=rotr(k[i-1],3)
         if m==4: tmp^=k[i-3]
         tmp^= rotr(tmp,1)
-        k[i]=((~k[i-m])&MASK)^tmp^z[(i-m)%62]^c
+        k[i]=k[i-m]^tmp^z[(i-m)%62]^c   # c ^ k = ~k ^ 3
         k[i]&=MASK
     return k
 def simon_enc(x,y,k):
