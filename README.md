@@ -16,14 +16,16 @@ This repository provides a fully reproducible synthesis benchmarking framework f
 | PRESENT-128 | 64 | 128 | SPN |
 | SIMON | 64 | 128 | Feistel |
 | SPECK | 64 | 128 | ARX |
-| Dipper-64/96 | 64 | 96 | SPN-ARX |
-| Dipper-64/128 | 64 | 128 | SPN-ARX |
+| Dipper-64/96 ¹ | 64 | 96 | SPN-ARX |
+| Dipper-64/128 ¹ | 64 | 128 | SPN-ARX |
 
-The Dipper cores (`dipper_rtl/`) are the round-based RTL of
+¹ **Added after the paper; not part of its results.** The Dipper cores
+(`dipper_rtl/`) are the round-based RTL of
 [Dipper-lightweight-cipher](https://github.com/AlexGuseinov/Dipper-lightweight-cipher)
 @ `26d0f05` (Huseynli, Imamverdiyev, Alizadeh, *Cryptography* 10(4), 52, 2026).
-They go through the same flow as the other ciphers but are left out of the
-inter-library calibration, so `calibration_results.csv` covers the six ciphers above them.
+They go through the same, unchanged flow as the other ciphers but are left out
+of the inter-library calibration, so `calibration_results.csv` covers the six
+original ciphers only.
 
 ---
 
@@ -37,8 +39,10 @@ inter-library calibration, so `calibration_results.csv` covers the six ciphers a
 
 ## Tools
 
-- [Yosys](https://github.com/YosysHQ/yosys) — Open-source synthesis
-- [ABC](https://github.com/berkeley-abc/abc) — Logic optimization and technology mapping
+- [Yosys](https://github.com/YosysHQ/yosys) 0.33 — Open-source synthesis
+  (the Ubuntu 24.04 package; `synth_results.csv` reproduces exactly with it)
+- [ABC](https://github.com/berkeley-abc/abc) (built into Yosys) — Logic optimization and technology mapping
+- Python 3 (standard library only)
 
 ---
 
@@ -46,19 +50,22 @@ inter-library calibration, so `calibration_results.csv` covers the six ciphers a
 
 ```
 lwc-synth-bench/
-├── rtl/                   # Verilog RTL sources
-│   ├── gift/
-│   ├── present/
-│   ├── simon/
-│   └── speck/
-├── dipper_rtl/            # Dipper-64/96 and Dipper-64/128 RTL
-├── libs/                  # Standard cell libraries
-├── scripts/               # Synthesis automation scripts
-│   ├── run_synth.py
-│   └── speck_simon_ref.py
-├── results/               # All synthesis outputs
-│   ├── logs/              # Yosys synthesis logs per cipher/component
-│   └── csv/               # GE results and calibration data
+├── gift_rtl/              # GIFT-64-128 and GIFT-128-128 RTL
+├── present_rtl/           # PRESENT-80 and PRESENT-128 RTL
+├── simon_rtl/             # SIMON-64/128 RTL
+├── speck_rtl/             # SPECK-64/128 RTL
+├── dipper_rtl/            # Dipper-64/96 and Dipper-64/128 RTL (added after the paper)
+├── libs/                  # Standard cell libraries (Liberty)
+├── scripts/
+│   ├── run_synth.py       # synthesis of all cores x libraries + calibration
+│   └── speck_simon_ref.py # Python reference of SPECK/SIMON, checks the official vectors
+├── results/
+│   ├── logs/              # Yosys logs per core/component
+│   └── csv/
+│       ├── synth_results.csv      # GE per cipher and library (output of run_synth.py)
+│       ├── calibration_results.csv# inter-library calibration (output of run_synth.py)
+│       ├── ge_results.csv         # Nangate45 full-core results
+│       └── ge_components.csv      # Nangate45 round / key-schedule components
 └── README.md
 ```
 
@@ -66,35 +73,42 @@ lwc-synth-bench/
 
 ## Reproducing Results
 
-**1. Install dependencies**
+**1. Install Yosys** (0.33 for identical numbers)
 ```bash
 sudo apt install yosys
-pip install pandas
 ```
 
-**2. Run synthesis**
+**2. Run synthesis** from the repository root
 ```bash
-python scripts/run_synth.py
+python3 scripts/run_synth.py
 ```
 
-**3. Results** will be written to `results/csv/ge_results.csv` and `results/csv/synth_results.csv`.
+**3. Results**: `synth_results.csv` and `calibration_results.csv` are written to
+the current directory; the committed copies are in `results/csv/`.
+
+**Optional — check the SPECK/SIMON references**
+```bash
+python3 scripts/speck_simon_ref.py
+```
 
 ---
 
 ## Results Summary
 
-Gate equivalent (GE) results across libraries (full tables in `results/csv/`):
+Gate equivalents of the full cores (from `results/csv/synth_results.csv`):
 
-| Cipher | Component | Nangate45 (GE) | sky130 (GE) | ASAP7 (GE) |
-|--------|-----------|----------------|-------------|------------|
-| GIFT-64 | Full core | — | — | — |
-| GIFT-128 | Full core | — | — | — |
-| PRESENT-80 | Full core | — | — | — |
-| PRESENT-128 | Full core | — | — | — |
-| SIMON | Full core | — | — | — |
-| SPECK | Full core | — | — | — |
+| Cipher | Nangate45 (GE) | sky130 (GE) | ASAP7 (GE) |
+|--------|----------------|-------------|------------|
+| GIFT-64-128 | 2196.7 | 2303.0 | 1352.8 |
+| GIFT-128-128 | 3399.0 | 3470.7 | 2161.0 |
+| PRESENT-80 | 2386.0 | 2354.3 | 1436.3 |
+| PRESENT-128 | 2963.0 | 2886.3 | 1749.7 |
+| SIMON-64/128 | 2812.3 | 3098.0 | 1847.8 |
+| SPECK-64/128 | 2943.0 | 3008.3 | 1875.2 |
+| Dipper-64/96 ¹ | 2497.7 | 2504.0 | 1565.0 |
+| Dipper-64/128 ¹ | 2824.0 | 2810.3 | 1739.3 |
 
-> Fill in actual values from `results/csv/ge_results.csv` before publishing.
+¹ Added after the paper; not part of its results.
 
 ---
 
